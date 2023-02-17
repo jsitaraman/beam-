@@ -14,16 +14,16 @@ public:
   double L_{1};             // length of the beam
   double root_{0};          // root location of the beam
   double omega_{0};         // rotation rate
-  // TODO change these to non-STL raw arrays
+  // raw arrays
   // for GPU compatibility
-  std::vector<double> el_;  // element length
-  std::vector<double> q_;   // degrees of freedom {q,q_d}
-  std::vector<double> M_;   // global mass matrix
-  std::vector<double> K_;   // global stiffness matrix
-  std::vector<double> C_;   // global damping matrix
-  std::vector<double> F_;   // global forcing vector
-  std::vector<double> G_;   // Iteration matrix for time integration
-  std::vector<double> elprop_; // element property data per quadrature pt
+  double * el_{nullptr};     // element length
+  double * q_{nullptr};      // degrees of freedom {q,q_d}
+  double * M_{nullptr};      // global mass matrix
+  double * K_{nullptr};      // global stiffness matrix
+  double * C_{nullptr};      // global damping matrix
+  double * F_{nullptr};      // global forcing vector
+  double * G_{nullptr};      // Iteration matrix for time integration
+  double * elprop_{nullptr}; // element property data per quadrature pt
 
   beam();
   virtual ~beam();

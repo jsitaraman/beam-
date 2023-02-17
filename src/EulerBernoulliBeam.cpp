@@ -11,13 +11,23 @@ namespace beam_pp {
 // everything is prefixed by  "i" here for preventing
 // conflict with other variables
 enum pmap {iMass, iEIy, iGJ, iEIz, iEA, iKM1, iKM2, iEG, iCF, iXL, iXX};  
-namespace element_matrices {
+namespace eb_operators {
+  //
+  // TODO this lambda needs to be modified
+  // when we add more degrees of freedom
+  //
+  int global_matrix_loc(int e, int i, int j, int nelem, int ndofs)
+  {
+    int row = (i < 4) ? (2*e+i) : 2*nelem+2+2*e+(i-4);
+    int col = (j < 4) ? (2*e+j) : 2*nelem+2+2*e+(j-4);
+    return row*ndofs+col;
+  }
+
   // Mass matrix for an Euler-Bernoulli Beam
   void mass_matrix(const int elemID,      // element id
 		   const int i,           // ith dof of element
 		   const int j,           // jth dof of element
 		   const int nelem,       // number of elements
-		   const double xl,       // element length
 		   const double *elprops, // element property data
 		   const double omega,    // rotational speed
 		   const int iloc,        // location in global matrix to fill in 
@@ -95,7 +105,6 @@ namespace element_matrices {
 		      const int i,           // ith dof of element
 		      const int j,           // jth dof of element
 		      const int nelem,       // number of elements
-		      const double xl,       // element length
 		      const double *elprops, // element property data
 		      const int iloc,        // location in global matrix to fill in
 		      const double str_damp, // structural damping  
@@ -111,7 +120,6 @@ namespace element_matrices {
 			const int i,           // ith dof of element
 			const int j,           // jth dof of element
 			const int nelem,       // number of elements
-			const double xl,       // element length
 			const double *elprops, // element property data
          		const double omega,    // rotational speed 
 			const int iloc,        // location in global matrix to fill in
@@ -221,8 +229,10 @@ EulerBernoulliBeam::EulerBernoulliBeam(dict_properties & input_data)
   std::cout << "deltal" << " " << deltal << std::endl;
   int ngauss=quadrature::nquadrature;
   // uniform size elements for now
-  el_.resize(nelem_,deltal);
-  elprop_.resize(nelem_*ngauss*nprops_max_,0);
+  el_=new double[nelem_];
+  for(int e=0;e<nelem_;e++) el_[e]=deltal;
+  elprop_=new double[nelem_*ngauss*nprops_max_];
+  for(int i=0;i<nelem_*ngauss*nprops_max_;i++) elprop_[i]=0;
   double *x_by_l=input_data["x"].data();
   // non-dimensionalize the length
   int ndata=input_data["x"].size();
@@ -326,13 +336,67 @@ void EulerBernoulliBeam::centrifugal_stiffening()
     for(int n=ngauss-1;n>=0;n--) {
       double xp=quadrature::xloc[n];   
       double xx=xi+el_[e]*(1+xp)*0.5;  // x location
-      elprop_[iCF+nelem_*ngauss+e*ngauss + n]=  cf +
-	a*(xend*xend - xx*xx)*0.5 +
-	b*(xend*xend*xend - xx*xx*xx)/3.0;
+      elprop_[iCF+nelem_*ngauss+e*ngauss + n]=  cf + omega_*omega_*
+	(a*(xend*xend - xx*xx)*0.5 +
+	 b*(xend*xend*xend - xx*xx*xx)/3.0);
     }  
   }
-}  
 }
+
+void EulerBernoulliBeam::Assemble(void)
+{
+  // TODO
+  // hard code for flap+torsion for now
+  int dofs_per_elem_=7;
+  int shared_dofs_per_elem=6;
+  int unique_dofs_per_elem = dofs_per_elem_ - shared_dofs_per_elem;
+  int ndofs_=nelem_*(shared_dofs_per_elem/2+unique_dofs_per_elem);
+  // adjust for the first and last elements that don't share
+  // degrees of freedom
+  ndofs_ += shared_dofs_per_elem;
+  // allocate matrices
+  M_ = new double[ndofs_*ndofs_];
+  C_ = new double[ndofs_*ndofs_];
+  K_ = new double[ndofs_*ndofs_];
+  F_ = new double[ndofs_];
+  G_ = new double[4*ndofs_*ndofs_];  
+  //
+  // add these for access within lambda
+  // when we move this loop to the GPU
+  //
+  int nelem=nelem_;
+  int ndofs=ndofs_;
+  int dofs_per_elem=dofs_per_elem_;
+  int ntotal=nelem_*dofs_per_elem*dofs_per_elem;
+  double *M=M_;
+  double *K=K_;
+  double *C=C_;
+  double *elprop=elprop_;
+  double omega=omega_;
+  // hard code structural damping for testing
+  double str_damp=0.1;
+  // This loop needs to be multi-threaded
+  // OMP or GPU to get max efficiency in assembly
+  for(int n=0;n<ntotal;n++) {
+    int elemID = n/(dofs_per_elem*dofs_per_elem);
+    // local linear index
+    int matIDX = n% (dofs_per_elem*dofs_per_elem);
+    // local indices within element matrix
+    int i = matIDX/dofs_per_elem;
+    int j = matIDX%dofs_per_elem;
+    // global index in M,C,K matrices
+    int iloc=eb_operators::global_matrix_loc(elemID,i,j,nelem,ndofs);
+
+    eb_operators::mass_matrix(elemID,i,j,nelem,
+			      elprop,omega,iloc,M);
+    eb_operators::damping_matrix(elemID,i,j,nelem,
+				 elprop,iloc,str_damp,C);
+    eb_operators::stiffness_matrix(elemID,i,j,nelem,
+				   elprop,omega,iloc,K);    
+  }    
+}
+} // namespace beam_pp
+
                                 
 				     
 				     
