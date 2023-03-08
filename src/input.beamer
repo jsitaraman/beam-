@@ -1,0 +1,27 @@
+!
+! bo-105 input file
+!
+&inputs
+ R=4.94,                         ! radius of the rotor
+ omega=40.105,                   ! rotational frequency (rad/s)
+ hinge_off=0.0,                  ! hinge offset (m)
+ nelem=64,                       ! number of beam elements 
+ eiy_input=66828.40725120514,    ! flap stiffness (if it is constant)
+ gj_input=38055.0652402696,      ! torsional stiffness (if it is constant)
+ m0=6.46,                        ! mass per unit length for scaling purposes  
+ ykm1=0.002,                     ! radius of gyration in flap direction
+ ykm2=0.0152,                    ! radius of gyration in lag direction 
+ flapmodes=16,                   ! number of flap modes to report 
+ torsionmodes=4,                 ! number of torsion modes to report
+ iartic=0,                       ! articulated or not
+ imethod=1,                      ! imethod = 0 (frequency/modes), imethod=1 (time integration),
+                                 ! imethod=2 (static analysis)
+ nsteps=300,                    ! number of time steps
+ dt=0.01,                      ! dt for time integration (seconds)   
+ scheme='bdf2',                  ! time integration scheme ('bdf2' or 'rk3')
+ nsubiter=10,                    ! number of newton sub-iterations 
+ str_damp=1.0,                    ! structural damping (percentage)
+ theta0=0.17,                    ! collective pitch angle if a rotor (radians)
+ constant_properties=0,          ! read properties from a file if zero, if one use specified  
+&end                             ! values above
+

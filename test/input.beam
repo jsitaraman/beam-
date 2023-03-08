@@ -1,0 +1,26 @@
+#
+# bo-105 input file
+#
+root  = 0.0
+L     = 4.94
+omega = 40.105
+nelem = 8
+#
+# property distribution of the beam
+# x    - location along the beam
+# Mass - mass per unit length (kg/m)
+# EIy  - Vertical (flap) bending stiffness (N m^2)
+# EIz  - Horizontal (lag) bending stiffness (N m^2)
+# GJ   - Torsion bending stiffness (N m^2)
+# yk1  - radius of gyration flap (m)
+# yk2  - radius of gyration lag  (m)
+# eg   - cg offset from elastic axis (m)
+#
+x      =   0.0, 0.5488, 1.0978, 1.6497, 2.1956, 2.7444, 3.2933, 3.8422, 4.3911,   4.94
+Mass   =  6.46,  5.814,  5.168,  4.522,  3.876,    3.2,  2.584,  1.938,  1.292,  0.646
+EIy    = 60000,  39366,  24576,  14406,   7776,   3750,   1536,    486,     96,      6
+EIz    = 60000,  39366,  24576,  14406,    7776,  3750,   1536,    486,     96,      6
+GJ     = 30000,  19683,  12288,   7203,    3888,  1875,    768,    243,     48,      3
+yk1    =  0.01,  0.009,  0.008,  0.007,   0.006, 0.005,  0.004,  0.003,  0.002,  0.001
+yk2    = 0.076, 0.0684, 0.0608, 0.0532,  0.0456, 0.038, 0.0304, 0.0228, 0.0152, 0.0076
+eg     =   0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,    0.0,    0.0,    0.0
